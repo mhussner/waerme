@@ -73,7 +73,10 @@ def newest_file(file_path, file_name, pattern):
     files = []
     for file in os.listdir(file_path):
         if os.path.isfile(os.path.join(file_path,file)):
+            print(file)
             if re.match(pattern, file) is not None:
+                print(file)
+                print(re.match(pattern, file).group(0))
                 files.append(os.path.join(file_path, re.match(pattern, file).group(0)))
     
     time = 0
@@ -82,7 +85,7 @@ def newest_file(file_path, file_name, pattern):
         modified_time = os.stat(path).st_mtime
         if time < modified_time:
             time = modified_time
-            newest_file = file.replace(file_path, '')
+            newest_file = os.path.basename(file)
    
     return newest_file
 
@@ -97,8 +100,8 @@ def main():
     
     speicher_initial = st.number_input('Initialer Speicherstand', min_value=0, max_value=400, value='min')
     
-    file_name = '.*_Wärme-HS-Last*.csv'
-    file_path = 'Z:\BelVis\Export\Its_Werte\'
+    file_name = '.*_Wärme-HS-Last.*.csv'
+    file_path = 'Z:\BelVis\Export\Ist_Werte'
     #file_name = '.*_ID_Tagesfahrplan_v12.4.xlsm'
     #file_path = os.path.join(os.path.expanduser('~'),'Desktop', 'waerme')
     file_name_pattern = re.compile(file_name)
