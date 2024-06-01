@@ -1,5 +1,6 @@
 import sys
 import os
+import re
 import numpy as np
 import pandas as pd
 import datetime
@@ -67,6 +68,24 @@ def save_edits():
 def get_input_current_df(current_df):
     st.session_state.df_temp_edited = st.data_editor(current_df, column_config={'laden':None, 'speicher':None})
 
+def newest_file(file_path, file_name, pattern):
+    
+    files = []
+    for file in os.listdir(file_path):
+        if os.path.isfile(os.path.join(file_path,file)):
+            if re.match(pattern, file) is not None:
+                files.append(os.path.join(file_path, re.match(pattern, file).group(0)))
+    
+    time = 0
+    for file in files:
+        path = os.path.join(file_path, file)
+        modified_time = os.stat(path).st_mtime
+        if time < modified_time:
+            time = modified_time
+            newest_file = file.lstrip(file_path)
+   
+    return newest_file
+
 def main():
     print('hi')
     
@@ -78,7 +97,19 @@ def main():
     
     speicher_initial = st.number_input('Initialer Speicherstand', min_value=0, max_value=400, value='min')
     
-    test = waerme_prog(speicher=speicher_initial, timestamp=datum[0])
+    file_name = '.*_Wärme-HS-Last*.csv'
+    file_path = 'Z:\BelVis\Export\Its_Werte\'
+    #file_name = '.*_ID_Tagesfahrplan_v12.4.xlsm'
+    #file_path = os.path.join(os.path.expanduser('~'),'Desktop', 'waerme')
+    file_name_pattern = re.compile(file_name)
+    
+    if 'file_name' not in  st.session_state:
+        st.session_state.file_name = file_name
+        
+    st.session_state.file_name = newest_file(file_path, st.session_state.file_name, file_name_pattern)
+    print(st.session_state.file_name)
+    
+    test = waerme_prog(speicher=speicher_initial, timestamp=datum[0], excel_path=file_path, excel_name=st.session_state.file_name)
     test.calc_speicher(test.prognose_df)
     
     col1, col2 = st.columns(2)
