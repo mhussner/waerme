@@ -82,7 +82,7 @@ def newest_file(file_path, file_name, pattern):
         modified_time = os.stat(path).st_mtime
         if time < modified_time:
             time = modified_time
-            newest_file = file.lstrip(file_path)
+            newest_file = file.replace(file_path, '')
    
     return newest_file
 
