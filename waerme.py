@@ -32,14 +32,14 @@ class waerme_prog:
         self.create_prognose_df()
     
     def number_of_quarter_h(self, start_date, start_t, end_date, end_t):
-    """
-    Berechnet Anzahl der Viertelsunden aus Start- und Endzeit
-    ---
-    start_date: Startdatum datetime.date
-    start_t: Startzeit datetime.time
-    end_date: Enddatum datetime.date
-    end_time: Endzeit datetime.time
-    """
+        """
+        Berechnet Anzahl der Viertelsunden aus Start- und Endzeit
+        ---
+        start_date: Startdatum datetime.date
+        start_t: Startzeit datetime.time
+        end_date: Enddatum datetime.date
+        end_time: Endzeit datetime.time
+        """
         start = datetime.datetime.combine(start_date, start_t)
         end = datetime.datetime.combine(end_date, end_t)
         # Beerechne Anzahl 1/4h aus Zeitdifferenz in sec
@@ -48,13 +48,13 @@ class waerme_prog:
         return int(n_quarter_h)
         
     def create_initial_df(self, start_day, start_t, n_quarter_h):
-    """
-    Erzeuge initiale Tabelle über alle Viertel Stunden mit Null-Werten
-    ---
-    start_day: Startdatum datetime.date
-    start_t: Startzeit datetime.time
-    n_quarter_h: Anzahl Viertelstunden int
-    """
+        """
+        Erzeuge initiale Tabelle über alle Viertel Stunden mit Null-Werten
+        ---
+        start_day: Startdatum datetime.date
+        start_t: Startzeit datetime.time
+        n_quarter_h: Anzahl Viertelstunden int
+        """
         #Erzeuge pandas df mit initialen Zeitreihen für n_quarter_h Viertelstunden
         self.initial_df = pd.DataFrame(np.stack([self.zeit, self.mhkwa, self.mhkwn, self.hwea, self.hwen, self.laden, self.speicher],axis=-1), columns=['zeit', 'mhkwa', 'mhkwn', 'hwea', 'hwen', 'laden', 'speicher'])  
         #Erzeuge den Zeitreihenindex
@@ -63,13 +63,13 @@ class waerme_prog:
         self.initial_df = self.initial_df.set_index('zeit')
     
     def create_time_index(self, start_date=datetime.date.today(), start_t='00:00:00', n_quarter_h=96):
-    """
-    Erzeuge die Zeitreihe für den Zeitreihenindex aus Startdatum, Startzeit und Anzahl Viertelstunden
-    ---
-    start_day: Startdatum datetime.date
-    start_t: Startzeit datetime.time
-    n_quarter_h: Anzahl Viertelstunden int
-    """
+        """
+        Erzeuge die Zeitreihe für den Zeitreihenindex aus Startdatum, Startzeit und Anzahl Viertelstunden
+        ---
+        start_day: Startdatum datetime.date
+        start_t: Startzeit datetime.time
+        n_quarter_h: Anzahl Viertelstunden int
+        """
         time = datetime.datetime.combine(start_date, start_t)
         date = pd.to_datetime(time)
         #Zähle in Viertelstundenschritten hoch und erzeuge timestamps
@@ -77,11 +77,11 @@ class waerme_prog:
         return date
         
     def calc_speicher(self, df):
-    """
-    Errechnet den Soeicherstand und die Laderaten anhand der Prognose und der Spalten der Anlagenleistung
-    ---
-    df: Prognosetabelle pandas dataframe
-    """
+        """
+        Errechnet den Soeicherstand und die Laderaten anhand der Prognose und der Spalten der Anlagenleistung
+        ---
+        df: Prognosetabelle pandas dataframe
+        """
         # laden = Stadtlast - Erzeugung -> positiv/entladen, negativ/laden
         df.loc[:,'laden'] = df['prognose'] - df['mhkwa'] - df['mhkwn'] - df['hwea'] - df['hwen']
         #setze Laderate pro Viertelstunde
@@ -91,18 +91,18 @@ class waerme_prog:
         return df
         
     def load_prognose(self):
-    """
-    Lade die Prognose aus der Datenquelle in einen pandas df
-    ---
-    benutze excel_path und excel_name um df prognose excel zu erzeugen
-    """
+        """
+        Lade die Prognose aus der Datenquelle in einen pandas df
+        ---
+        benutze excel_path und excel_name um df prognose excel zu erzeugen
+        """
         self.prognose_excel = pd.read_csv(os.path.join(self.excel_path, self.excel_name), sep=';', header=7, index_col=0, encoding='ISO-8859-1', decimal=',').rename(columns={'Value': 'prognose', 'Value.1': 'strom'})['prognose'].dropna()
         self.prognose_excel.index = pd.to_datetime(self.prognose_excel.index, dayfirst=True)
     
     def create_prognose_df(self):
-    """
-    Erzeuge Tabelle mit Prognose
-    """
+        """
+        Erzeuge Tabelle mit Prognose
+        """
         #join Initiale Tabelle mit geladener Prognose an Hand des Zeitindexes
         self.prognose_df = self.initial_df.join(self.prognose_excel, how='left',lsuffix='', rsuffix='_y').fillna(0).dropna()
         #Verwerfe doppelte Spalten
@@ -118,12 +118,12 @@ class waerme_prog:
             st.write('Prognose konnte nicht geladen werden')
 
     def select_time(self, start, end):
-    """
-    Wähle ein Zeitfenster in der Prognosetabelle und gib diese gefilterte Tabelle zurück
-    ---
-    start: Startzeitpunkt (Datum und Uhrzeit) datetime.date
-    end: Endzeitpunkt (Datum und Uhrzeit) datetime.date
-    """
+        """
+        Wähle ein Zeitfenster in der Prognosetabelle und gib diese gefilterte Tabelle zurück
+        ---
+        start: Startzeitpunkt (Datum und Uhrzeit) datetime.date
+        end: Endzeitpunkt (Datum und Uhrzeit) datetime.date
+        """
         try:
             df = self.prognose_df[start:end]
         except:
@@ -132,27 +132,29 @@ class waerme_prog:
         return df
 
 def save_edits():
-"""
-speichere Änderungen an der Tabelle im streamlit session state für nächsten Durchlauf des Programms
-"""
+    """
+    speichere Änderungen an der Tabelle im streamlit session state für nächsten Durchlauf des Programms
+    """
     st.session_state.df_temp = st.session_state.df_temp_edited.copy()
     
 def get_input_current_df(current_df):
-"""
-Hole neuen Input ab und ppeichere den aktuellen neuen Input in temporärer Variable
----
-current_df: aktuelle Tabelle, die verändert wird pandas dataframe
-"""
+    """
+    Hole neuen Input ab und ppeichere den aktuellen neuen Input in temporärer Variable
+    ---
+    current_df: aktuelle Tabelle, die verändert wird pandas dataframe
+    """
     st.session_state.df_temp_edited = st.data_editor(current_df, column_config={'laden':None, 'speicher':None}, column_order=('prognose', 'mhkwa', 'mhkwn', 'hwea', 'hwen'))
 
 def newest_file(file_path, pattern):
- """
- Suche Name der neusten (Bearbeitungszeit) Datei, die pattern im Dateinamen beeinhaltet
- ---
- file_path: Pfad in der Quelldatei liegt string
- pattern: Suchpattern für Dateiname regular expression string
- """
+    """
+    Suche Name der neusten (Bearbeitungszeit) Datei, die pattern im Dateinamen beeinhaltet
+    ---
+    file_path: Pfad in der Quelldatei liegt string
+    pattern: Suchpattern für Dateiname regular expression string
+    """
+     
     files = []
+    
     #Suche dateien im Dateipfad
     for file in os.listdir(file_path):
         # wenn es sich um eine Datei handellt
@@ -176,23 +178,23 @@ def newest_file(file_path, pattern):
     return newest_file
 
 def date_parser(datum):
-"""
-Ersetze - in Zeitstring der Quelldatei um erfolgreiches Einlesen zu gewährleisten
-"""
+    """
+    Ersetze - in Zeitstring der Quelldatei um erfolgreiches Einlesen zu gewährleisten
+    """
     return str(datum).replace('-', '')
 
 def main():
     print('Start')
     
     #Auswahl der Startzeit/Endzeit, Datum und Uhrzeit
-    datum = st.date_input('Datum', value=(datetime.date.today(),datetime.date.today() + datetime.timedelta(days=1)), key='start_date')
-    t_start = st.time_input('Start', value=datetime.time(0,15,0), key='start_time')
-    t_end = st.time_input('Ende', value=datetime.time(23,45,0), key='end_time')
+    datum = st.date_input('Datum', value=(datetime.date.today(),datetime.date.today() + datetime.timedelta(days=1)), key='start_date', help='Auswahl Start- und End-Datum (D-D) oder (D-D+1)')
+    t_start = st.time_input('Start', value=datetime.time(0,15,0), key='start_time', help='Startzeit (nachgestempelt/bis)')
+    t_end = st.time_input('Ende', value=datetime.time(23,45,0), key='end_time', help='Endzeit (nachgestempelt/bis)')
     start = datetime.datetime.combine(datum[0], t_start)
     end = datetime.datetime.combine(datum[1], t_end)
     
     #eingabe initialer Speicherstand
-    speicher_initial = st.number_input('Initialer Speicherstand', min_value=0, max_value=400, value='min')
+    speicher_initial = st.number_input('Initialer Speicherstand', min_value=0, max_value=400, value='min', help='Initialer Speicherstand zur Startzeit')
     
     #Suchpattern für Wärmelast-Quelldatei erzeugen
     date_string = date_parser(datum[0])
@@ -229,13 +231,13 @@ def main():
         col11,  col12, col13 = st.columns(3)
         with col11:
             #Reset button, setze gesamte aktuelle Tabelle auf 0
-            if st.button('Reset Eingabe', on_click=save_edits):
+            if st.button('Reset Eingabe', on_click=save_edits, help='Reset aller Eingaben, Lädt Tabelle mit Werten 0'):
                 for cols in st.session_state.df_temp.columns:
                     st.session_state.df_temp[cols].values[:] = 0
         
         with col12:
             #Lade Prognose Button, lade Prognose erneut, Achtung: resettet aktuelle Eingabe der Fahrpläne auf 0
-            if st.button('Lade Prognose', on_click=save_edits):
+            if st.button('Lade Prognose', on_click=save_edits, help='Lädt Prognose aus der Quelldatei erneut. ACHTUNG: Fahrplaneingabe wird resettet!'):
                 prog.load_prognose()
                 prog.create_prognose_df()
                 prognose = prog.select_time(start, end)['prognose']
@@ -243,13 +245,14 @@ def main():
         
         with col13:
             # Lade neue Zeiten Button, aktualisiere aktuelle ptognose Tabelle auf eingestellten Zeitrahmen
-            if st.button('Lade neue Zeiten', on_click=save_edits):
+            if st.button('Lade neue Zeiten', on_click=save_edits, help='Drücken um eingestellte Zeiten auf Tabelle anzuwenden.'):
                 st.session_state.df_temp = prog.select_time(start, end)
                 merged_df_temp = st.session_state.df_temp.join(st.session_state.df_temp_edited, how='left', lsuffix='', rsuffix='_y')
                 index = merged_df_temp.dropna().index
                 st.session_state.df_temp.loc[index,:] = st.session_state.df_temp_edited.loc[index,:]
         
         #Aufnahme der aktuellen eingaben aus dem Web-gui
+        st.write('Hier Prognose anpassen und gewünschten Fahrplan eingeben (copy per drag ist möglich)')
         get_input_current_df(st.session_state.df_temp)
     
     with col2:
