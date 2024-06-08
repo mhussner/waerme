@@ -8,40 +8,31 @@ import streamlit as st
 st.set_page_config(layout='wide')
 
 class waerme_prog:
-    def __init__(self, speicher=0, excel_path=os.path.join(os.path.expanduser('~'),'Desktop', 'waerme'), excel_name='2024_05_17_ID_Tagesfahrplan_v12.4.xlsm', start_day=datetime.date.today(), start_t=None, end_day=datetime.date.today(), end_t=None):
-        n_quarter_h = self.number_of_quarter_h(start_day, start_t, end_day, end_t)
-        self.zeit = [i for i in range(n_quarter_h)]
-        print(self.zeit)
-        self.mhkwa = np.zeros(n_quarter_h)
-        self.mhkwn = np.zeros(n_quarter_h)
-        self.hwea = np.zeros(n_quarter_h)
-        self.hwen = np.zeros(n_quarter_h)
-        self.speicher = np.zeros(n_quarter_h)
+    def __init__(self, speicher=0, excel_path=os.path.join(os.path.expanduser('~'),'Desktop', 'waerme'), excel_name='2024_05_17_ID_Tagesfahrplan_v12.4.xlsm', timestamp=datetime.date.today()):
+        self.timestamp = timestamp
+        self.zeit = [i for i in range(96)]
+        self.mhkwa = np.zeros(96)
+        self.mhkwn = np.zeros(96)
+        self.hwea = np.zeros(96)
+        self.hwen = np.zeros(96)
+        self.speicher = np.zeros(96)
         self.initial_speicher = speicher
-        self.laden = np.zeros(n_quarter_h)
-        self.create_initial_df(start_day, start_t, n_quarter_h)
+        self.laden = np.zeros(96)
+        self.create_initial_df()
         self.excel_path = excel_path
         self.excel_name = excel_name
         self.load_prognose()
         self.create_prognose_df()
     
-    def number_of_quarter_h(self, start_date, start_t, end_date, end_t):
-        start = datetime.datetime.combine(start_date, start_t)
-        end = datetime.datetime.combine(end_date, end_t)
-        n_quarter_h = (end - start).total_seconds() /60 / 15
-        print(n_quarter_h)
-        return int(n_quarter_h)
-        
-    def create_initial_df(self, start_day, start_t, n_quarter_h):
+    def create_initial_df(self):
         self.initial_df = pd.DataFrame(np.stack([self.zeit, self.mhkwa, self.mhkwn, self.hwea, self.hwen, self.laden, self.speicher],axis=-1), columns=['zeit', 'mhkwa', 'mhkwn', 'hwea', 'hwen', 'laden', 'speicher'])  
-        date = self.create_time_index(start_date=start_day, start_t=start_t, n_quarter_h=n_quarter_h)
+        date = self.create_time_index(time=self.timestamp)
         self.initial_df['zeit'] = date
         self.initial_df = self.initial_df.set_index('zeit')
     
-    def create_time_index(self, start_date=datetime.date.today(), start_t='00:00:00', n_quarter_h=96):
-        time = datetime.datetime.combine(start_date, start_t)
-        date = pd.to_datetime(time)
-        date = date + pd.to_timedelta(np.arange(stop=n_quarter_h*15, step=15), 'min')
+    def create_time_index(self, time='1st january of 0', start=None, stop=None):
+        date = pd.to_datetime(time) + pd.to_timedelta(15, 'min')
+        date = date + pd.to_timedelta(np.arange(stop=96*15, step=15), 'min')
         return date
         
     def calc_speicher(self, df):
@@ -51,12 +42,13 @@ class waerme_prog:
         return df
         
     def load_prognose(self):
+        #self.prognose_excel = pd.read_excel(os.path.join(self.excel_path, self.excel_name), sheet_name='ID', header=11, index_col=17).rename(columns={'Unnamed: 18': 'prognose'})['prognose'].dropna()
         self.prognose_excel = pd.read_csv(os.path.join(self.excel_path, self.excel_name), sep=';', header=7, index_col=0, encoding='ISO-8859-1', decimal=',').rename(columns={'Value': 'prognose', 'Value.1': 'strom'})['prognose'].dropna()
         self.prognose_excel.index = pd.to_datetime(self.prognose_excel.index, dayfirst=True)
         # for date in start, end .date unique load prognose file, add to df
     
     def create_prognose_df(self):
-        self.prognose_df = self.initial_df.join(self.prognose_excel, how='left',lsuffix='', rsuffix='_y').fillna(0).dropna()
+        self.prognose_df = self.initial_df.join(self.prognose_excel, how='inner',lsuffix='', rsuffix='_y').dropna()
         print(self.prognose_excel, self.initial_df, self.prognose_df)
         self.prognose_df.drop(self.prognose_df.filter(regex='_y$').columns, axis=1, inplace=True)
         self.prognose_df = self.calc_speicher(self.prognose_df)
@@ -78,7 +70,7 @@ def save_edits():
     st.session_state.df_temp = st.session_state.df_temp_edited.copy()
     
 def get_input_current_df(current_df):
-    st.session_state.df_temp_edited = st.data_editor(current_df, column_config={'laden':None, 'speicher':None}, column_order=('prognose', 'mhkwa', 'mhkwn', 'hwea', 'hwen'))
+    st.session_state.df_temp_edited = st.data_editor(current_df, column_config={'laden':None, 'speicher':None})
 
 def newest_file(file_path, file_name, pattern):
     
@@ -107,14 +99,13 @@ def main():
     print('hi')
     
     datum = st.date_input('Datum', value=(datetime.date.today(),datetime.date.today() + datetime.timedelta(days=1)), key='start_date')
-    t_start = st.time_input('Start', value=datetime.time(0,15,0), key='start_time')
-    t_end = st.time_input('Ende', value=datetime.time(23,45,0), key='end_time')
+    t_start = st.time_input('Start', value=None, key='start_time')
+    t_end = st.time_input('Ende', value=None, key='end_time')
     start = datetime.datetime.combine(datum[0], t_start)
     end = datetime.datetime.combine(datum[1], t_end)
     
     speicher_initial = st.number_input('Initialer Speicherstand', min_value=0, max_value=400, value='min')
     
-    #get_all_dates()
     date_string = date_parser(datum[0])
     file_name = date_string + '_Wärme-HS-Last.*.csv'
     print('File name', file_name)
@@ -129,7 +120,7 @@ def main():
     st.session_state.file_name = newest_file(file_path, st.session_state.file_name, file_name_pattern)
     print(st.session_state.file_name)
     
-    test = waerme_prog(start_day=datum[0], start_t=t_start, end_day=datum[1], end_t=t_end, speicher=speicher_initial, excel_path=file_path, excel_name=st.session_state.file_name)
+    test = waerme_prog(speicher=speicher_initial, timestamp=datum[0], excel_path=file_path, excel_name=st.session_state.file_name)
     test.calc_speicher(test.prognose_df)
     
     col1, col2 = st.columns(2)
