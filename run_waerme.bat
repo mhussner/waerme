@@ -1,4 +1,6 @@
-Rem Starte Anaconda prompt (hier den Pfad zur .bat einfügen, der die anaconda prompt öffnet)
+@echo off
+Rem .bat startet das waerme web gui zur Prognose der Speicherstände
+Rem Starte Anaconda prompt hier den Pfad zur .bat einfügen, der die anaconda prompt öffnet
 call C:\Users\einkee\AppData\Local\miniconda3\Scripts\activate.bat
 Rem activiere virtual environment mit nötigen python libraries
 call conda activate warm
